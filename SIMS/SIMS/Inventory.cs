@@ -95,4 +95,28 @@ public class Inventory
         Products.Remove(product);
         return true;
     } // End of DeleteProduct method
+
+    //SearchProduct method
+    public void SearchProduct(string name)
+    {
+        //check if the name is null or empty
+        if (string.IsNullOrEmpty(name))
+        {
+            Console.WriteLine("Name cannot be null or empty");
+            return;
+        }
+
+        //find the product
+        var product = FindProduct(name);
+
+        //check if the product is null
+        if (product is null)
+        {
+            Console.WriteLine("Product not found");
+            return;
+        }
+
+        //print the product
+        Console.WriteLine(product);
+    } // End of SearchProduct method
 } // End of Inventory class
