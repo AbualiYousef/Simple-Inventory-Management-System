@@ -41,6 +41,37 @@ public class Inventory
         }
     } // End of ViewAllProducts method
 
+    //UpdateProduct method
+    public bool UpdateProduct(string currentProductName, string? newProductName,
+        decimal? newProductPrice, int? newProductQuantity)
+    {
+        //find the product
+        var product = FindProduct(currentProductName);
+
+        //check if the product is null
+        if (product is null)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(newProductName))
+        {
+            product.Name = newProductName;
+        }
+
+        if (newProductPrice.HasValue)
+        {
+            product.Price = newProductPrice.Value;
+        }
+
+        if (newProductQuantity.HasValue)
+        {
+            product.Quantity = newProductQuantity.Value;
+        }
+
+        return true;
+    } // End of UpdateProduct method
+
     //FindProduct method
     private Product? FindProduct(string name)
     {
