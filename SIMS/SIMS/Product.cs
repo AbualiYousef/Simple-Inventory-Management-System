@@ -14,4 +14,10 @@ public class Product
         Price = price;
         Quantity = quantity;
     }// End of Constructor
+    
+    // ToString method
+    public override string ToString()
+    {
+        return $"Name: {Name}, Price: {Price:C}, Quantity: {Quantity}";
+    } // End of ToString method
 } // End of Product class
