@@ -40,4 +40,11 @@ public class Inventory
             Console.WriteLine(product);
         }
     } // End of ViewAllProducts method
+
+    //FindProduct method
+    private Product? FindProduct(string name)
+    {
+        //find the product
+        return Products.Find(p => p.Name!.Equals(name, StringComparison.OrdinalIgnoreCase));
+    } // End of FindProduct method
 } // End of Inventory class
