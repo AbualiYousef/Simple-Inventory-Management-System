@@ -78,4 +78,21 @@ public class Inventory
         //find the product
         return Products.Find(p => p.Name!.Equals(name, StringComparison.OrdinalIgnoreCase));
     } // End of FindProduct method
+
+    //DeleteProduct method
+    public bool DeleteProduct(string name)
+    {
+        //find the product
+        var product = FindProduct(name);
+
+        //check if the product is null
+        if (product is null)
+        {
+            return false;
+        }
+
+        //remove the product
+        Products.Remove(product);
+        return true;
+    } // End of DeleteProduct method
 } // End of Inventory class
