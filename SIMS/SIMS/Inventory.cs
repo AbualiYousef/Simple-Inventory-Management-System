@@ -24,4 +24,20 @@ public class Inventory
         Products.Add(product);
         return true;
     } // End of AddProduct method
+
+    //ViewAllProducts method
+    public void ViewAllProducts()
+    {
+        //check if there are no products
+        if (Products.Count == 0)
+        {
+            Console.WriteLine("No products found");
+        }
+
+        //print all the products
+        foreach (var product in Products)
+        {
+            Console.WriteLine(product);
+        }
+    } // End of ViewAllProducts method
 } // End of Inventory class
