@@ -84,22 +84,4 @@ public class Inventory
         return product;
     }
 
-    // public void SearchProduct(string name)
-    // {
-    //     if (string.IsNullOrEmpty(name))
-    //     {
-    //         Console.WriteLine("Name cannot be null or empty");
-    //         return;
-    //     }
-    //
-    //     var product = FindProduct(name);
-    //
-    //     if (product is null)
-    //     {
-    //         Console.WriteLine("Product not found");
-    //         return;
-    //     }
-    //
-    //     Console.WriteLine(product);
-    // }
 } // End of Inventory class

@@ -163,6 +163,7 @@ namespace SIMS
             }
         }
 
+
         private static string ReadNonEmptyString()
         {
             string input;
