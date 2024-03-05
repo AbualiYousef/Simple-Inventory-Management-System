@@ -153,7 +153,14 @@ namespace SIMS
         {
             Console.Write("Enter product name to search: ");
             string searchProductName = ReadNonEmptyString();
-            inventory.SearchProduct(searchProductName);
+            try
+            {
+                inventory.SearchProduct(searchProductName);
+            }
+            catch (ProductNotFoundException)
+            {
+                Console.WriteLine("Failed to search product. Product not found.");
+            }
         }
 
         private static string ReadNonEmptyString()
