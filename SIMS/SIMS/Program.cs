@@ -1,4 +1,5 @@
 ﻿using System;
+using SIMS.Exceptions;
 
 namespace SIMS
 {
@@ -81,21 +82,21 @@ namespace SIMS
             Console.Write("Enter product quantity: ");
             int quantity = ReadInteger();
 
-            Product product = new Product(name, price, quantity);
-            if (inventory.AddProduct(product))
+            try
             {
+                inventory.AddProduct(new Product(name, price, quantity));
                 Console.WriteLine("Product added successfully.");
             }
-            else
+            catch (ProductAlreadyExistsException)
             {
-                Console.WriteLine("Failed to add product. Product may already exist.");
+                Console.WriteLine("Failed to add product. Product already exists.");
             }
         }
 
         private static void ViewAllProducts(Inventory inventory)
         {
             inventory.ViewAllProducts();
-        } 
+        }
 
         private static void UpdateProduct(Inventory inventory)
         {
@@ -119,13 +120,18 @@ namespace SIMS
                 ? null
                 : int.Parse(newProductQuantityInput);
 
-            if (inventory.UpdateProduct(currentProductName, newProductName, newProductPrice, newProductQuantity))
+            try
             {
-                Console.WriteLine("Product updated successfully.");
+                inventory.UpdateProduct
+                    (currentProductName, new Product(newProductName, newProductPrice, newProductQuantity));
             }
-            else
+            catch (ProductNotFoundException)
             {
                 Console.WriteLine("Failed to update product. Product not found.");
+            }
+            catch (ProductAlreadyExistsException)
+            {
+                Console.WriteLine("Failed to update product. Product already exists.");
             }
         }
 
