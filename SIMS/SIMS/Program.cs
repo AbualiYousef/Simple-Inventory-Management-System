@@ -15,7 +15,7 @@ namespace SIMS
                 ProcessMenuChoice(choice, inventory);
                 Console.WriteLine();
             }
-        } // End of Main method
+        }
 
         private static void DisplayMenu()
         {
@@ -27,7 +27,7 @@ namespace SIMS
             Console.WriteLine("5. Search Product");
             Console.WriteLine("6. Exit");
             Console.Write("Enter your choice: ");
-        } // End of DisplayMenu method
+        }
 
         private static int GetMenuChoice()
         {
@@ -39,7 +39,7 @@ namespace SIMS
             }
 
             return choice;
-        } // End of GetMenuChoice method
+        }
 
         private static void ProcessMenuChoice(int choice, Inventory inventory)
         {
@@ -68,7 +68,7 @@ namespace SIMS
                     Console.WriteLine("Invalid choice. Please select a valid option.");
                     break;
             }
-        } // End of ProcessMenuChoice method
+        }
 
         private static void AddProduct(Inventory inventory)
         {
@@ -90,12 +90,12 @@ namespace SIMS
             {
                 Console.WriteLine("Failed to add product. Product may already exist.");
             }
-        } // End of AddProduct method
+        }
 
         private static void ViewAllProducts(Inventory inventory)
         {
             inventory.ViewAllProducts();
-        } // End of ViewAllProducts method
+        } 
 
         private static void UpdateProduct(Inventory inventory)
         {
@@ -127,7 +127,7 @@ namespace SIMS
             {
                 Console.WriteLine("Failed to update product. Product not found.");
             }
-        } // End of UpdateProduct method
+        }
 
         private static void DeleteProduct(Inventory inventory)
         {
@@ -141,16 +141,15 @@ namespace SIMS
             {
                 Console.WriteLine("Failed to delete product. Product not found.");
             }
-        } // End of DeleteProduct method
+        }
 
         private static void SearchProduct(Inventory inventory)
         {
             Console.Write("Enter product name to search: ");
             string searchProductName = ReadNonEmptyString();
             inventory.SearchProduct(searchProductName);
-        } // End of SearchProduct method
+        }
 
-        //Methods to handle user input
         private static string ReadNonEmptyString()
         {
             string input;
@@ -164,7 +163,7 @@ namespace SIMS
             } while (string.IsNullOrEmpty(input));
 
             return input;
-        } // End of ReadNonEmptyString method
+        }
 
         private static decimal ReadDecimal()
         {
@@ -175,7 +174,7 @@ namespace SIMS
             }
 
             return result;
-        } // End of ReadDecimal method
+        }
 
         private static int ReadInteger()
         {
@@ -186,6 +185,6 @@ namespace SIMS
             }
 
             return result;
-        } // End of ReadInteger method
-    } // End of Program class
-} // End of SIMS namespace
+        }
+    }
+}
