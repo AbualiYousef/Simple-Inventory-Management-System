@@ -1,23 +1,21 @@
+using SIMS.Exceptions;
+
 namespace SIMS;
 
 public class Inventory
 {
     private List<Product> Products { get; } = [];
 
-    public bool AddProduct(Product? product)
+    public void AddProduct(Product product)
     {
-        if (product is null)
-        {
-            return false;
-        }
+        ArgumentNullException.ThrowIfNull(product);
 
         if (Products.Any(p => p.Name == product.Name))
         {
-            return false;
+            throw new ProductAlreadyExistsException();
         }
 
         Products.Add(product);
-        return true;
     }
 
     public void ViewAllProducts()
@@ -33,32 +31,25 @@ public class Inventory
         }
     }
 
-    public bool UpdateProduct(string currentProductName, string? newProductName,
-        decimal? newProductPrice, int? newProductQuantity)
+    public void UpdateProduct(string currentProductName, Product product)
     {
-        var product = FindProduct(currentProductName);
+        ArgumentNullException.ThrowIfNull(product);
 
-        if (product is null)
+        var existingProduct = FindProduct(currentProductName);
+
+        if (existingProduct is null)
         {
-            return false;
+            throw new ProductNotFoundException();
         }
 
-        if (!string.IsNullOrEmpty(newProductName))
+        if (Products.Any(p => p.Name == product.Name) && product.Name != currentProductName)
         {
-            product.Name = newProductName;
+            throw new ProductAlreadyExistsException();
         }
 
-        if (newProductPrice.HasValue)
-        {
-            product.Price = newProductPrice.Value;
-        }
-
-        if (newProductQuantity.HasValue)
-        {
-            product.Quantity = newProductQuantity.Value;
-        }
-
-        return true;
+        existingProduct.Name = product.Name;
+        existingProduct.Price = product.Price;
+        existingProduct.Quantity = product.Quantity;
     }
 
     private Product? FindProduct(string name)
@@ -97,4 +88,4 @@ public class Inventory
 
         Console.WriteLine(product);
     }
-}// End of Inventory class
+} // End of Inventory class
