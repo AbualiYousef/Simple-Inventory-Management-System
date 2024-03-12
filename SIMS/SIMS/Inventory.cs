@@ -4,13 +4,13 @@ namespace SIMS;
 
 public class Inventory
 {
-    private List<Product> Products { get; } = [];
+    private List<Product> Products { get; } = new List<Product>();
 
     public void AddProduct(Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
 
-        if (Products.Any(p => p.Name == product.Name))
+        if (Products.Any(p => p.Id == product.Id))
         {
             throw new ProductAlreadyExistsException();
         }
@@ -22,7 +22,7 @@ public class Inventory
     {
         if (Products.Count == 0)
         {
-            Console.WriteLine("No products found");
+            Console.WriteLine("No products found.");
         }
 
         foreach (var product in Products)
@@ -31,35 +31,35 @@ public class Inventory
         }
     }
 
-    public void UpdateProduct(string currentProductName, Product product)
+    public void UpdateProduct(int id, Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
 
-        var existingProduct = FindProduct(currentProductName);
+        var existingProduct = FindProduct(id);
 
         if (existingProduct is null)
         {
             throw new ProductNotFoundException();
         }
 
-        if (Products.Any(p => p.Name == product.Name) && product.Name != currentProductName)
+        if (Products.Any(p => p.Id == product.Id) && product.Id != id)
         {
             throw new ProductAlreadyExistsException();
         }
 
-        existingProduct.Name = product.Name;
-        existingProduct.Price = product.Price;
-        existingProduct.Quantity = product.Quantity;
+        existingProduct.Name = product.Name ?? existingProduct.Name;
+        existingProduct.Price = product.Price ?? existingProduct.Price;
+        existingProduct.Quantity = product.Quantity ?? existingProduct.Quantity;
     }
 
-    private Product? FindProduct(string name)
+    private Product? FindProduct(int id)
     {
-        return Products.Find(p => p.Name!.Equals(name, StringComparison.OrdinalIgnoreCase));
+        return Products.Find(p => p.Id == id);
     }
 
-    public bool DeleteProduct(string name)
+    public bool DeleteProduct(int id)
     {
-        var product = FindProduct(name);
+        var product = FindProduct(id);
 
         if (product is null)
         {
@@ -70,11 +70,11 @@ public class Inventory
         return true;
     }
 
-    public Product SearchProduct(string name)
+    public Product SearchProduct(int id)
     {
-        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(id);
 
-        var product = FindProduct(name);
+        var product = FindProduct(id);
 
         if (product is null)
         {
@@ -83,5 +83,4 @@ public class Inventory
 
         return product;
     }
-
-} // End of Inventory class
+}

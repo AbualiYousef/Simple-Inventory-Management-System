@@ -1,5 +1,4 @@
-﻿using System;
-using SIMS.Exceptions;
+﻿using SIMS.Exceptions;
 
 namespace SIMS
 {
@@ -73,6 +72,9 @@ namespace SIMS
 
         private static void AddProduct(Inventory inventory)
         {
+            Console.Write("Enter product ID: ");
+            int id = ReadInteger();
+
             Console.Write("Enter product name: ");
             string name = ReadNonEmptyString();
 
@@ -84,7 +86,7 @@ namespace SIMS
 
             try
             {
-                inventory.AddProduct(new Product(name, price, quantity));
+                inventory.AddProduct(new Product(id, name, price, quantity));
                 Console.WriteLine("Product added successfully.");
             }
             catch (ProductAlreadyExistsException)
@@ -100,46 +102,37 @@ namespace SIMS
 
         private static void UpdateProduct(Inventory inventory)
         {
-            Console.Write("Enter current product name: ");
-            string currentProductName = ReadNonEmptyString();
+            Console.Write("Enter product ID to update: ");
+            int id = ReadInteger();
 
             Console.Write("Enter new product name (leave empty to keep current name): ");
             string newProductNameInput = Console.ReadLine()?.Trim();
-            string newProductName =
-                string.IsNullOrEmpty(newProductNameInput) ? currentProductName : newProductNameInput;
+            string newProductName = string.IsNullOrEmpty(newProductNameInput) ? null : newProductNameInput;
 
             Console.Write("Enter new product price (leave empty to keep current price): ");
             string newProductPriceInput = Console.ReadLine()?.Trim();
-            decimal? newProductPrice = string.IsNullOrEmpty(newProductPriceInput)
-                ? null
-                : decimal.Parse(newProductPriceInput);
+            decimal? newProductPrice = string.IsNullOrEmpty(newProductPriceInput) ? null : decimal.Parse(newProductPriceInput);
 
             Console.Write("Enter new product quantity (leave empty to keep current quantity): ");
             string newProductQuantityInput = Console.ReadLine()?.Trim();
-            int? newProductQuantity = string.IsNullOrEmpty(newProductQuantityInput)
-                ? null
-                : int.Parse(newProductQuantityInput);
+            int? newProductQuantity = string.IsNullOrEmpty(newProductQuantityInput) ? null : int.Parse(newProductQuantityInput);
 
             try
             {
-                inventory.UpdateProduct
-                    (currentProductName, new Product(newProductName, newProductPrice, newProductQuantity));
+                inventory.UpdateProduct(id, new Product(id, newProductName, newProductPrice, newProductQuantity));
+                Console.WriteLine("Product updated successfully.");
             }
             catch (ProductNotFoundException)
             {
                 Console.WriteLine("Failed to update product. Product not found.");
             }
-            catch (ProductAlreadyExistsException)
-            {
-                Console.WriteLine("Failed to update product. Product already exists.");
-            }
         }
 
         private static void DeleteProduct(Inventory inventory)
         {
-            Console.Write("Enter product name to delete: ");
-            string deleteProductName = ReadNonEmptyString();
-            if (inventory.DeleteProduct(deleteProductName))
+            Console.Write("Enter product ID to delete: ");
+            int id = ReadInteger();
+            if (inventory.DeleteProduct(id))
             {
                 Console.WriteLine("Product deleted successfully.");
             }
@@ -151,11 +144,12 @@ namespace SIMS
 
         private static void SearchProduct(Inventory inventory)
         {
-            Console.Write("Enter product name to search: ");
-            string searchProductName = ReadNonEmptyString();
+            Console.Write("Enter product ID to search: ");
+            int id = ReadInteger();
             try
             {
-                inventory.SearchProduct(searchProductName);
+                Product product = inventory.SearchProduct(id);
+                Console.WriteLine($"Product found: {product}");
             }
             catch (ProductNotFoundException)
             {
