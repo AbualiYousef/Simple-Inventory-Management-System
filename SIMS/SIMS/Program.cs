@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using MongoDB.Bson;
 using SIMS.Exceptions;
 using SIMS.Models;
 
@@ -15,15 +16,15 @@ public class Program
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
         Configuration = builder.Build();
 
-        var connectionString = Configuration.GetConnectionString("DefaultConnection");
+        var connectionString = Configuration.GetConnectionString("MongoDbConnection");
+        var databaseName = Configuration["DatabaseName"];
 
-        if (connectionString == null)
+        if (connectionString == null || databaseName == null)
         {
             throw new ConnectionStringNotFoundException();
         }
 
-        var inventory = new Inventory(connectionString);
-
+        var inventory = new Inventory(connectionString, databaseName);
         while (true)
         {
             DisplayMenu();
@@ -128,7 +129,13 @@ public class Program
     private static async Task UpdateProduct(Inventory inventory)
     {
         Console.Write("Enter product ID to update: ");
-        var id = ReadInteger();
+        var idInput = Console.ReadLine()?.Trim();
+
+        if (!ObjectId.TryParse(idInput, out var id))
+        {
+            Console.WriteLine("Invalid product ID.");
+            return;
+        }
 
         Console.Write("Enter new product name (leave empty to keep current name): ");
         var newProductNameInput = Console.ReadLine()?.Trim();
@@ -146,22 +153,27 @@ public class Program
 
         try
         {
-            await inventory.UpdateProductAsync(id, new Product(newProductName, newProductPrice, newProductQuantity));
+            await inventory.UpdateProductAsync(id,
+                new Product(newProductName, newProductPrice, newProductQuantity));
             Console.WriteLine("Product updated successfully.");
         }
         catch (ProductNotFoundException)
         {
             Console.WriteLine("Failed to update product. Product not found.");
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
 
     private static async Task DeleteProduct(Inventory inventory)
     {
         Console.Write("Enter product ID to delete: ");
-        var id = ReadInteger();
+        var id = ReadNonEmptyString();
         try
         {
-            var deleted = await inventory.DeleteProductAsync(id);
+            var deleted = await inventory.DeleteProductAsync(ObjectId.Parse(id));
             Console.WriteLine(deleted
                 ? "Product deleted successfully."
                 : "Failed to delete product.");
