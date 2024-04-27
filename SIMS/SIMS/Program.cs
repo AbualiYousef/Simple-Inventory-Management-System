@@ -161,14 +161,16 @@ public class Program
         var id = ReadInteger();
         try
         {
-            var deleted = await inventory.DeleteProductAsync(id);
-            Console.WriteLine(deleted
-                ? "Product deleted successfully."
-                : "Failed to delete product.");
+            await inventory.DeleteProductAsync(id);
+            Console.WriteLine("Product deleted successfully.");
         }
         catch (ProductNotFoundException)
         {
             Console.WriteLine("Failed to delete product. Product not found.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("An error occurred: " + ex.Message);
         }
     }
 
@@ -184,6 +186,10 @@ public class Program
         catch (ProductNotFoundException)
         {
             Console.WriteLine("Failed to search product. Product not found.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("An error occurred: " + ex.Message);
         }
     }
 

@@ -31,6 +31,14 @@ public class SqlProductRepository(string connectionString)
         return products;
     }
 
+    public async Task<Product?> GetProductByIdAsync(int id)
+    {
+        const string query = "SELECT Id, Name, Price, Quantity FROM Products WHERE Id = @Id";
+        await using var reader = await ExecuteReaderAsync(query, new Dictionary<string, object> { { "@Id", id } });
+        if (!await reader.ReadAsync()) return null;
+        return ReadProduct(reader);
+    }
+
     public async Task<Product?> GetProductByNameAsync(string name)
     {
         const string query = "SELECT Id, Name, Price, Quantity FROM Products WHERE Name = @Name";
@@ -45,10 +53,11 @@ public class SqlProductRepository(string connectionString)
         var parameters = new Dictionary<string, object>
         {
             { "@Id", id },
-            { "@Name", product.Name! },
-            { "@Price", product.Price! },
-            { "@Quantity", product.Quantity! }
+            { "@Name", product.Name ?? (object)DBNull.Value },
+            { "@Price", product.Price ?? (object)DBNull.Value },
+            { "@Quantity", product.Quantity ?? (object)DBNull.Value }
         };
+
         return await ExecuteNonQueryAsync(query, parameters) > 0;
     }
 
@@ -56,12 +65,6 @@ public class SqlProductRepository(string connectionString)
     {
         const string query = "DELETE FROM Products WHERE Id = @Id";
         return await ExecuteNonQueryAsync(query, new Dictionary<string, object> { { "@Id", id } }) > 0;
-    }
-
-    public async Task<bool> ProductExistsAsync(int id)
-    {
-        const string query = "SELECT COUNT(*) FROM Products WHERE Id = @Id";
-        return (int)await ExecuteScalarAsync(query, new Dictionary<string, object> { { "@Id", id } }) > 0;
     }
 
     private async Task<int> ExecuteNonQueryAsync(string query, Dictionary<string, object> parameters)
@@ -93,25 +96,7 @@ public class SqlProductRepository(string connectionString)
         try
         {
             await connection.OpenAsync();
-            return await command.ExecuteReaderAsync(System.Data.CommandBehavior.CloseConnection);
-        }
-        catch (SqlException ex)
-        {
-            Console.WriteLine($"SQL Error: {ex.Message}");
-            throw;
-        }
-    }
-
-    private async Task<object> ExecuteScalarAsync(string query, Dictionary<string, object> parameters)
-    {
-        await using var connection = new SqlConnection(connectionString);
-        await using var command = new SqlCommand(query, connection);
-        AddParameters(command, parameters);
-        try
-        {
-            await connection.OpenAsync();
-            var result = await command.ExecuteScalarAsync();
-            return result ?? 0;
+            return await command.ExecuteReaderAsync(CommandBehavior.CloseConnection);
         }
         catch (SqlException ex)
         {
@@ -124,7 +109,7 @@ public class SqlProductRepository(string connectionString)
     {
         foreach (var (key, value) in parameters)
         {
-            command.Parameters.AddWithValue(key, value ?? DBNull.Value);
+            command.Parameters.AddWithValue(key, value);
         }
     }
 

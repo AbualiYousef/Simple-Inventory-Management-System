@@ -22,23 +22,38 @@ public class Inventory(string connectionString)
     public async Task UpdateProductAsync(int id, Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
-
-        if (!await _sqlProductRepository.ProductExistsAsync(id))
+        var existingProduct = await _sqlProductRepository.GetProductByIdAsync(id);
+        if (existingProduct == null)
         {
             throw new ProductNotFoundException();
         }
 
-        await _sqlProductRepository.UpdateProductAsync(id, product);
+        var updatedProduct = new Product(
+            product.Name ?? existingProduct.Name,
+            product.Price ?? existingProduct.Price,
+            product.Quantity ?? existingProduct.Quantity
+        );
+
+        var updateResult = await _sqlProductRepository.UpdateProductAsync(id, updatedProduct);
+        if (!updateResult)
+        {
+            throw new Exception("Failed to update the product.");
+        }
     }
 
-    public async Task<bool> DeleteProductAsync(int id)
+    public async Task DeleteProductAsync(int id)
     {
-        if (!await _sqlProductRepository.ProductExistsAsync(id))
+        var productExists = await _sqlProductRepository.GetProductByIdAsync(id);
+        if (productExists == null)
         {
             throw new ProductNotFoundException();
         }
 
-        return await _sqlProductRepository.DeleteProductAsync(id);
+        var deleteResult = await _sqlProductRepository.DeleteProductAsync(id);
+        if (!deleteResult)
+        {
+            throw new Exception("Failed to delete the product.");
+        }
     }
 
     public async Task<Product> SearchProductByNameAsync(string name)
