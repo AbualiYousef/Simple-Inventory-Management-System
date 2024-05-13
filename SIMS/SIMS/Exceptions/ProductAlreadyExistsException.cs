@@ -1,8 +1,3 @@
 namespace SIMS.Exceptions;
 
-public class ProductAlreadyExistsException: Exception
-{
-    public ProductAlreadyExistsException() : base("Product Already Exists")
-    {
-    }
-}
+public class ProductAlreadyExistsException() : Exception("Product Already Exists");

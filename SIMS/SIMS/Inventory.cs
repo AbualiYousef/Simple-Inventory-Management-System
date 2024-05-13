@@ -1,81 +1,64 @@
 using SIMS.Exceptions;
+using SIMS.Models;
+using SIMS.Repositories;
 
 namespace SIMS;
 
-public class Inventory
+public class Inventory(string connectionString)
 {
-    private List<Product> Products { get; } = new List<Product>();
+    private readonly SqlProductRepository _sqlProductRepository = new(connectionString);
 
-    public void AddProduct(Product product)
+    public async Task AddProductAsync(Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
-
-        if (Products.Any(p => p.Id == product.Id))
-        {
-            throw new ProductAlreadyExistsException();
-        }
-
-        Products.Add(product);
+        await _sqlProductRepository.AddProductAsync(product);
     }
 
-    public void ViewAllProducts()
+    public async Task<List<Product>> GetAllProductsAsync()
     {
-        if (Products.Count == 0)
-        {
-            Console.WriteLine("No products found.");
-        }
-
-        foreach (var product in Products)
-        {
-            Console.WriteLine(product);
-        }
+        return await _sqlProductRepository.GetAllProductsAsync();
     }
 
-    public void UpdateProduct(int id, Product product)
+    public async Task UpdateProductAsync(int id, Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
-
-        var existingProduct = FindProduct(id);
-
-        if (existingProduct is null)
+        var existingProduct = await _sqlProductRepository.GetProductByIdAsync(id);
+        if (existingProduct == null)
         {
             throw new ProductNotFoundException();
         }
 
-        if (Products.Any(p => p.Id == product.Id) && product.Id != id)
+        var updatedProduct = new Product(
+            product.Name ?? existingProduct.Name,
+            product.Price ?? existingProduct.Price,
+            product.Quantity ?? existingProduct.Quantity
+        );
+
+        var updateResult = await _sqlProductRepository.UpdateProductAsync(id, updatedProduct);
+        if (!updateResult)
         {
-            throw new ProductAlreadyExistsException();
+            throw new Exception("Failed to update the product.");
+        }
+    }
+
+    public async Task DeleteProductAsync(int id)
+    {
+        var productExists = await _sqlProductRepository.GetProductByIdAsync(id);
+        if (productExists == null)
+        {
+            throw new ProductNotFoundException();
         }
 
-        existingProduct.Name = product.Name ?? existingProduct.Name;
-        existingProduct.Price = product.Price ?? existingProduct.Price;
-        existingProduct.Quantity = product.Quantity ?? existingProduct.Quantity;
-    }
-
-    private Product? FindProduct(int id)
-    {
-        return Products.Find(p => p.Id == id);
-    }
-
-    public bool DeleteProduct(int id)
-    {
-        var product = FindProduct(id);
-
-        if (product is null)
+        var deleteResult = await _sqlProductRepository.DeleteProductAsync(id);
+        if (!deleteResult)
         {
-            return false;
+            throw new Exception("Failed to delete the product.");
         }
-
-        Products.Remove(product);
-        return true;
     }
 
-    public Product SearchProduct(int id)
+    public async Task<Product> SearchProductByNameAsync(string name)
     {
-        ArgumentNullException.ThrowIfNull(id);
-
-        var product = FindProduct(id);
-
+        var product = await _sqlProductRepository.GetProductByNameAsync(name);
         if (product is null)
         {
             throw new ProductNotFoundException();
