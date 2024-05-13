@@ -1,10 +1,11 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
+using SIMS.Interfaces;
 using SIMS.Models;
 
 namespace SIMS.Repositories;
 
-public class SqlProductRepository(string connectionString)
+public class SqlProductRepository(string connectionString) : IProductRepository
 {
     public async Task AddProductAsync(Product product)
     {
