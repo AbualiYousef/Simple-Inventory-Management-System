@@ -1,198 +1,239 @@
-﻿using SIMS.Exceptions;
+﻿using Microsoft.Extensions.Configuration;
+using MongoDB.Bson;
+using SIMS.Exceptions;
+using SIMS.Models;
 
-namespace SIMS
+namespace SIMS;
+
+public class Program
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            var inventory = new Inventory();
+    private static IConfiguration? Configuration { get; set; }
 
-            while (true)
-            {
-                DisplayMenu();
-                int choice = GetMenuChoice();
-                ProcessMenuChoice(choice, inventory);
-                Console.WriteLine();
-            }
+    public static async Task Main(string[] args)
+    {
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+        Configuration = builder.Build();
+
+        var connectionString = Configuration.GetConnectionString("MongoDbConnection");
+        var databaseName = Configuration["DatabaseName"];
+
+        if (connectionString == null || databaseName == null)
+        {
+            throw new ConnectionStringNotFoundException();
         }
 
-        private static void DisplayMenu()
+        var inventory = new Inventory(connectionString, databaseName);
+        while (true)
         {
-            Console.WriteLine("Menu:");
-            Console.WriteLine("1. Add Product");
-            Console.WriteLine("2. View All Products");
-            Console.WriteLine("3. Update Product");
-            Console.WriteLine("4. Delete Product");
-            Console.WriteLine("5. Search Product");
-            Console.WriteLine("6. Exit");
+            DisplayMenu();
+            var choice = GetMenuChoice();
+            await ProcessMenuChoice(choice, inventory);
+            Console.WriteLine();
+        }
+    }
+
+    private static void DisplayMenu()
+    {
+        Console.WriteLine("Menu:");
+        Console.WriteLine("1. Add Product");
+        Console.WriteLine("2. View All Products");
+        Console.WriteLine("3. Update Product");
+        Console.WriteLine("4. Delete Product");
+        Console.WriteLine("5. Search Product");
+        Console.WriteLine("6. Exit");
+        Console.Write("Enter your choice: ");
+    }
+
+    private static int GetMenuChoice()
+    {
+        int choice;
+        while (!int.TryParse(Console.ReadLine(), out choice))
+        {
+            Console.WriteLine("Invalid input. Please enter a number.");
             Console.Write("Enter your choice: ");
         }
 
-        private static int GetMenuChoice()
-        {
-            int choice;
-            while (!int.TryParse(Console.ReadLine(), out choice))
-            {
-                Console.WriteLine("Invalid input. Please enter a number.");
-                Console.Write("Enter your choice: ");
-            }
+        return choice;
+    }
 
-            return choice;
+    private static async Task ProcessMenuChoice(int choice, Inventory inventory)
+    {
+        switch (choice)
+        {
+            case 1:
+                await AddProduct(inventory);
+                break;
+            case 2:
+                await ViewAllProducts(inventory);
+                break;
+            case 3:
+                await UpdateProduct(inventory);
+                break;
+            case 4:
+                await DeleteProduct(inventory);
+                break;
+            case 5:
+                await SearchProduct(inventory);
+                break;
+            case 6:
+                Console.WriteLine("Exiting program...");
+                Environment.Exit(0);
+                break;
+            default:
+                Console.WriteLine("Invalid choice. Please select a valid option.");
+                break;
         }
+    }
 
-        private static void ProcessMenuChoice(int choice, Inventory inventory)
+    private static async Task AddProduct(Inventory inventory)
+    {
+        Console.Write("Enter product name: ");
+        var name = ReadNonEmptyString();
+
+        Console.Write("Enter product price: ");
+        var price = ReadDecimal();
+
+        Console.Write("Enter product quantity: ");
+        var quantity = ReadInteger();
+
+        try
         {
-            switch (choice)
-            {
-                case 1:
-                    AddProduct(inventory);
-                    break;
-                case 2:
-                    ViewAllProducts(inventory);
-                    break;
-                case 3:
-                    UpdateProduct(inventory);
-                    break;
-                case 4:
-                    DeleteProduct(inventory);
-                    break;
-                case 5:
-                    SearchProduct(inventory);
-                    break;
-                case 6:
-                    Console.WriteLine("Exiting program...");
-                    Environment.Exit(0);
-                    break;
-                default:
-                    Console.WriteLine("Invalid choice. Please select a valid option.");
-                    break;
-            }
+            await inventory.AddProductAsync(new Product(name, price, quantity));
+            Console.WriteLine("Product added successfully.");
         }
-
-        private static void AddProduct(Inventory inventory)
+        catch (ProductAlreadyExistsException)
         {
-            Console.Write("Enter product ID: ");
-            int id = ReadInteger();
-
-            Console.Write("Enter product name: ");
-            string name = ReadNonEmptyString();
-
-            Console.Write("Enter product price: ");
-            decimal price = ReadDecimal();
-
-            Console.Write("Enter product quantity: ");
-            int quantity = ReadInteger();
-
-            try
-            {
-                inventory.AddProduct(new Product(id, name, price, quantity));
-                Console.WriteLine("Product added successfully.");
-            }
-            catch (ProductAlreadyExistsException)
-            {
-                Console.WriteLine("Failed to add product. Product already exists.");
-            }
+            Console.WriteLine("Failed to add product. Product already exists.");
         }
+    }
 
-        private static void ViewAllProducts(Inventory inventory)
+    private static async Task ViewAllProducts(Inventory inventory)
+    {
+        var products = await inventory.GetAllProductsAsync();
+
+        if (products.Count == 0)
         {
-            inventory.ViewAllProducts();
+            Console.WriteLine("No products found.");
         }
-
-        private static void UpdateProduct(Inventory inventory)
+        else
         {
-            Console.Write("Enter product ID to update: ");
-            int id = ReadInteger();
-
-            Console.Write("Enter new product name (leave empty to keep current name): ");
-            string newProductNameInput = Console.ReadLine()?.Trim();
-            string newProductName = string.IsNullOrEmpty(newProductNameInput) ? null : newProductNameInput;
-
-            Console.Write("Enter new product price (leave empty to keep current price): ");
-            string newProductPriceInput = Console.ReadLine()?.Trim();
-            decimal? newProductPrice = string.IsNullOrEmpty(newProductPriceInput) ? null : decimal.Parse(newProductPriceInput);
-
-            Console.Write("Enter new product quantity (leave empty to keep current quantity): ");
-            string newProductQuantityInput = Console.ReadLine()?.Trim();
-            int? newProductQuantity = string.IsNullOrEmpty(newProductQuantityInput) ? null : int.Parse(newProductQuantityInput);
-
-            try
+            foreach (var product in products)
             {
-                inventory.UpdateProduct(id, new Product(id, newProductName, newProductPrice, newProductQuantity));
-                Console.WriteLine("Product updated successfully.");
-            }
-            catch (ProductNotFoundException)
-            {
-                Console.WriteLine("Failed to update product. Product not found.");
+                Console.WriteLine(product);
             }
         }
+    }
 
-        private static void DeleteProduct(Inventory inventory)
+    private static async Task UpdateProduct(Inventory inventory)
+    {
+        Console.Write("Enter product ID to update: ");
+        var idInput = Console.ReadLine()?.Trim();
+
+        if (!ObjectId.TryParse(idInput, out var id))
         {
-            Console.Write("Enter product ID to delete: ");
-            int id = ReadInteger();
-            if (inventory.DeleteProduct(id))
-            {
-                Console.WriteLine("Product deleted successfully.");
-            }
-            else
-            {
-                Console.WriteLine("Failed to delete product. Product not found.");
-            }
+            Console.WriteLine("Invalid product ID.");
+            return;
         }
 
-        private static void SearchProduct(Inventory inventory)
+        Console.Write("Enter new product name (leave empty to keep current name): ");
+        var newProductNameInput = Console.ReadLine()?.Trim();
+        var newProductName = string.IsNullOrEmpty(newProductNameInput) ? null : newProductNameInput;
+
+        Console.Write("Enter new product price (leave empty to keep current price): ");
+        var newProductPriceInput = Console.ReadLine()?.Trim();
+        decimal? newProductPrice =
+            string.IsNullOrEmpty(newProductPriceInput) ? null : decimal.Parse(newProductPriceInput);
+
+        Console.Write("Enter new product quantity (leave empty to keep current quantity): ");
+        var newProductQuantityInput = Console.ReadLine()?.Trim();
+        int? newProductQuantity =
+            string.IsNullOrEmpty(newProductQuantityInput) ? null : int.Parse(newProductQuantityInput);
+
+        try
         {
-            Console.Write("Enter product ID to search: ");
-            int id = ReadInteger();
-            try
+            await inventory.UpdateProductAsync(id,
+                new Product(newProductName, newProductPrice, newProductQuantity));
+            Console.WriteLine("Product updated successfully.");
+        }
+        catch (ProductNotFoundException)
+        {
+            Console.WriteLine("Failed to update product. Product not found.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+
+    private static async Task DeleteProduct(Inventory inventory)
+    {
+        Console.Write("Enter product ID to delete: ");
+        var id = ReadNonEmptyString();
+        try
+        {
+            var deleted = await inventory.DeleteProductAsync(ObjectId.Parse(id));
+            Console.WriteLine(deleted
+                ? "Product deleted successfully."
+                : "Failed to delete product.");
+        }
+        catch (ProductNotFoundException)
+        {
+            Console.WriteLine("Failed to delete product. Product not found.");
+        }
+    }
+
+    private static async Task SearchProduct(Inventory inventory)
+    {
+        Console.Write("Enter product name to search: ");
+        var name = ReadNonEmptyString();
+        try
+        {
+            var product = await inventory.SearchProductByNameAsync(name);
+            Console.WriteLine(product);
+        }
+        catch (ProductNotFoundException)
+        {
+            Console.WriteLine("Failed to search product. Product not found.");
+        }
+    }
+
+
+    private static string ReadNonEmptyString()
+    {
+        string input;
+        do
+        {
+            input = Console.ReadLine()?.Trim()!;
+            if (string.IsNullOrEmpty(input))
             {
-                Product product = inventory.SearchProduct(id);
-                Console.WriteLine($"Product found: {product}");
+                Console.WriteLine("Invalid input. Please enter a non-empty string.");
             }
-            catch (ProductNotFoundException)
-            {
-                Console.WriteLine("Failed to search product. Product not found.");
-            }
+        } while (string.IsNullOrEmpty(input));
+
+        return input;
+    }
+
+    private static decimal ReadDecimal()
+    {
+        decimal result;
+        while (!decimal.TryParse(Console.ReadLine(), out result))
+        {
+            Console.WriteLine("Invalid input. Please enter a valid decimal number.");
         }
 
+        return result;
+    }
 
-        private static string ReadNonEmptyString()
+    private static int ReadInteger()
+    {
+        int result;
+        while (!int.TryParse(Console.ReadLine(), out result))
         {
-            string input;
-            do
-            {
-                input = Console.ReadLine()?.Trim();
-                if (string.IsNullOrEmpty(input))
-                {
-                    Console.WriteLine("Invalid input. Please enter a non-empty string.");
-                }
-            } while (string.IsNullOrEmpty(input));
-
-            return input;
+            Console.WriteLine("Invalid input. Please enter a valid integer.");
         }
 
-        private static decimal ReadDecimal()
-        {
-            decimal result;
-            while (!decimal.TryParse(Console.ReadLine(), out result))
-            {
-                Console.WriteLine("Invalid input. Please enter a valid decimal number.");
-            }
-
-            return result;
-        }
-
-        private static int ReadInteger()
-        {
-            int result;
-            while (!int.TryParse(Console.ReadLine(), out result))
-            {
-                Console.WriteLine("Invalid input. Please enter a valid integer.");
-            }
-
-            return result;
-        }
+        return result;
     }
 }

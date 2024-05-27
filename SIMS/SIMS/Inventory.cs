@@ -1,81 +1,49 @@
+using MongoDB.Bson;
 using SIMS.Exceptions;
+using SIMS.Models;
+using SIMS.Repositories;
 
 namespace SIMS;
 
-public class Inventory
+public class Inventory(string connectionString, string databaseName)
 {
-    private List<Product> Products { get; } = new List<Product>();
+    private readonly MongoProductRepository _mongoProductRepository = new(connectionString, databaseName);
 
-    public void AddProduct(Product product)
+    public async Task AddProductAsync(Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
-
-        if (Products.Any(p => p.Id == product.Id))
-        {
-            throw new ProductAlreadyExistsException();
-        }
-
-        Products.Add(product);
+        await _mongoProductRepository.AddProductAsync(product);
     }
 
-    public void ViewAllProducts()
+    public async Task<List<Product>> GetAllProductsAsync()
     {
-        if (Products.Count == 0)
-        {
-            Console.WriteLine("No products found.");
-        }
-
-        foreach (var product in Products)
-        {
-            Console.WriteLine(product);
-        }
+        return await _mongoProductRepository.GetAllProductsAsync();
     }
 
-    public void UpdateProduct(int id, Product product)
+    public async Task UpdateProductAsync(ObjectId id, Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
-
-        var existingProduct = FindProduct(id);
-
-        if (existingProduct is null)
+        if (!await _mongoProductRepository.ProductExistsAsync(id))
         {
             throw new ProductNotFoundException();
         }
 
-        if (Products.Any(p => p.Id == product.Id) && product.Id != id)
+        await _mongoProductRepository.UpdateProductAsync(id, product);
+    }
+
+    public async Task<bool> DeleteProductAsync(ObjectId id)
+    {
+        if (!await _mongoProductRepository.ProductExistsAsync(id))
         {
-            throw new ProductAlreadyExistsException();
+            throw new ProductNotFoundException();
         }
 
-        existingProduct.Name = product.Name ?? existingProduct.Name;
-        existingProduct.Price = product.Price ?? existingProduct.Price;
-        existingProduct.Quantity = product.Quantity ?? existingProduct.Quantity;
+        return await _mongoProductRepository.DeleteProductAsync(id);
     }
 
-    private Product? FindProduct(int id)
+    public async Task<Product> SearchProductByNameAsync(string name)
     {
-        return Products.Find(p => p.Id == id);
-    }
-
-    public bool DeleteProduct(int id)
-    {
-        var product = FindProduct(id);
-
-        if (product is null)
-        {
-            return false;
-        }
-
-        Products.Remove(product);
-        return true;
-    }
-
-    public Product SearchProduct(int id)
-    {
-        ArgumentNullException.ThrowIfNull(id);
-
-        var product = FindProduct(id);
-
+        var product = await _mongoProductRepository.GetProductByNameAsync(name);
         if (product is null)
         {
             throw new ProductNotFoundException();
